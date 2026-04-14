@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/books")
@@ -15,6 +16,22 @@ public class BookController {
 
     public BookController(BookRepository bookRepository) {
         this.bookRepository = bookRepository;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Book>> getBooks(@RequestParam(required = false) Boolean read) {
+        List<Book> books = (read != null)
+                ? bookRepository.findByRead(read)
+                : bookRepository.findAll();
+
+        return ResponseEntity.ok(books);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Book> getBook(@PathVariable Long id) {
+        return bookRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
