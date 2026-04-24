@@ -2,14 +2,19 @@ package com.antogian.shelvie.books;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+
+import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "books")
 public class Book {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @NotBlank
     @Column(nullable = false)
@@ -21,11 +26,18 @@ public class Book {
 
     private String isbn;
 
-    private boolean read = false;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private BookStatus status = BookStatus.TO_READ;
 
-    // Getters & setters
+    @NotEmpty
+    @ElementCollection
+    @CollectionTable(name = "book_genres", joinColumns = @JoinColumn(name = "book_id"))
+    @Column(name = "genre", nullable = false)
+    private Set<String> genres;
 
-    public Long getId() { return id; }
+    public UUID getId() { return id; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -36,6 +48,9 @@ public class Book {
     public String getIsbn() { return isbn; }
     public void setIsbn(String isbn) { this.isbn = isbn; }
 
-    public boolean isRead() { return read; }
-    public void setRead(boolean read) { this.read = read; }
+    public BookStatus getStatus() { return status; }
+    public void setStatus(BookStatus status) { this.status = status; }
+
+    public Set<String> getGenres() { return genres; }
+    public void setGenres(Set<String> genres) { this.genres = genres; }
 }

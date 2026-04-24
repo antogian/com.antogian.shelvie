@@ -7,49 +7,60 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/books")
 public class BookController {
 
-    private final BookRepository bookRepository;
+    private final BookService bookService;
 
-    public BookController(BookRepository bookRepository) {
-        this.bookRepository = bookRepository;
+    public BookController(BookService bookService) {
+        this.bookService = bookService;
     }
 
     @GetMapping
-    public ResponseEntity<List<Book>> getBooks(@RequestParam(required = false) Boolean read) {
-        List<Book> books = (read != null)
-                ? bookRepository.findByRead(read)
-                : bookRepository.findAll();
-
-        return ResponseEntity.ok(books);
+    public ResponseEntity<List<BookResponse>> getBooks(
+            @RequestParam(required = false) BookStatus status) {
+        return ResponseEntity.ok(bookService.getAllBooks(status));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Book> getBook(@PathVariable Long id) {
-        return bookRepository.findById(id)
+    public ResponseEntity<BookResponse> getBook(@PathVariable UUID id) {
+        return bookService.getBook(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Book> createBook(@Valid @RequestBody BookRequest request) {
-        Book book = new Book();
-        book.setTitle(request.title());
-        book.setAuthor(request.author());
-        book.setIsbn(request.isbn());
-        book.setRead(request.read());
-
-        Book saved = bookRepository.save(book);
+    public ResponseEntity<BookResponse> createBook(@Valid @RequestBody BookRequest request) {
+        BookResponse created = bookService.createBook(request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
-                .buildAndExpand(saved.getId())
+                .buildAndExpand(created.id())
                 .toUri();
 
-        return ResponseEntity.created(location).body(saved);
+        return ResponseEntity.created(location).body(created);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<BookResponse> updateBook(@PathVariable UUID id,
+                                                   @Valid @RequestBody BookUpdateRequest request) {
+        if (request.genres() != null && request.genres().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return bookService.updateBook(id, request)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBook(@PathVariable UUID id) {
+        return bookService.deleteBook(id)
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.notFound().build();
     }
 }
