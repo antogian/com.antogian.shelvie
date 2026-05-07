@@ -11,14 +11,14 @@ public record BookResponse(
         BookStatus status,
         Set<String> genres
 ) {
-    public static BookResponse from(Book book) {
+    public static BookResponse from(BookRecord book) {
         return new BookResponse(
-                book.getId(),
-                book.getTitle(),
-                book.getAuthor(),
-                book.getIsbn(),
-                book.getStatus(),
-                book.getGenres()
+                book.id(),
+                book.title(),
+                book.author(),
+                book.isbn(),
+                book.status(),
+                book.genres()
         );
     }
 }

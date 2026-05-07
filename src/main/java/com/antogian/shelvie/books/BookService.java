@@ -1,12 +1,14 @@
 package com.antogian.shelvie.books;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@Transactional(readOnly = true)
 public class BookService {
 
     private final BookRepository bookRepository;
@@ -15,19 +17,20 @@ public class BookService {
         this.bookRepository = bookRepository;
     }
 
-    public List<BookResponse> getAllBooks(BookStatus status) {
+    public List<BookRecord> getAllBooks(BookStatus status) {
         List<Book> books = (status != null)
                 ? bookRepository.findByStatus(status)
                 : bookRepository.findAll();
 
-        return books.stream().map(BookResponse::from).toList();
+        return books.stream().map(BookRecord::from).toList();
     }
 
-    public Optional<BookResponse> getBook(UUID id) {
-        return bookRepository.findById(id).map(BookResponse::from);
+    public Optional<BookRecord> getBook(UUID id) {
+        return bookRepository.findById(id).map(BookRecord::from);
     }
 
-    public BookResponse createBook(BookRequest request) {
+    @Transactional
+    public BookRecord createBook(BookRequest request) {
         Book book = new Book();
         book.setTitle(request.title());
         book.setAuthor(request.author());
@@ -35,10 +38,11 @@ public class BookService {
         book.setStatus(request.status());
         book.setGenres(request.genres());
 
-        return BookResponse.from(bookRepository.save(book));
+        return BookRecord.from(bookRepository.save(book));
     }
 
-    public Optional<BookResponse> updateBook(UUID id, BookUpdateRequest request) {
+    @Transactional
+    public Optional<BookRecord> updateBook(UUID id, BookUpdateRequest request) {
         return bookRepository.findById(id)
                 .map(book -> {
                     book.setTitle(request.title());
@@ -46,10 +50,11 @@ public class BookService {
                     if (request.isbn() != null) book.setIsbn(request.isbn());
                     if (request.status() != null) book.setStatus(request.status());
                     if (request.genres() != null) book.setGenres(request.genres());
-                    return BookResponse.from(bookRepository.save(book));
+                    return BookRecord.from(bookRepository.save(book));
                 });
     }
 
+    @Transactional
     public boolean deleteBook(UUID id) {
         if (!bookRepository.existsById(id)) return false;
         bookRepository.deleteById(id);

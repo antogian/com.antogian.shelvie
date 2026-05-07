@@ -22,19 +22,24 @@ public class BookController {
     @GetMapping
     public ResponseEntity<List<BookResponse>> getBooks(
             @RequestParam(required = false) BookStatus status) {
-        return ResponseEntity.ok(bookService.getAllBooks(status));
+        return ResponseEntity.ok(
+                bookService.getAllBooks(status).stream()
+                        .map(BookResponse::from)
+                        .toList()
+        );
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<BookResponse> getBook(@PathVariable UUID id) {
         return bookService.getBook(id)
+                .map(BookResponse::from)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
     public ResponseEntity<BookResponse> createBook(@Valid @RequestBody BookRequest request) {
-        BookResponse created = bookService.createBook(request);
+        BookResponse created = BookResponse.from(bookService.createBook(request));
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -53,6 +58,7 @@ public class BookController {
         }
 
         return bookService.updateBook(id, request)
+                .map(BookResponse::from)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
